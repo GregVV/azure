@@ -1,0 +1,152 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "type": "string",
+            "defaultValue": "DEV",
+            "allowedValues": [
+                "DEV",
+                "TEST",
+                "STAGE",
+                "PROD"
+            ],
+            "metadata": {
+                "description": "This is your Environment name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "metadata": {
+                "description": "This is the region where the resources will be created"
+            }
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard",
+                "Premium",
+                "PremiumV2"
+            ],
+            "metadata": {
+                "description": "Choose App Service plan pricing tier"
+            }
+        },
+        "skuCode": {
+            "type": "string",
+            "defaultValue": "S1",
+            "allowedValues": [
+                "F1",
+                "D1",
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1",
+                "P2",
+                "P3",
+                "P1v2",
+                "P2v2",
+                "P3v2"
+            ],
+            "metadata": {
+                "description": "Choose App Service plan pricing tier"
+            }
+        },
+        "workerSize": {
+            "type": "string",
+            "defaultValue": "0",
+            "allowedValues": [
+                "0",
+                "3"
+            ],
+            "metadata": {
+                "description": "Worker default size is 0. For PremiumV2 is 3"
+            }
+        }
+    },
+    "variables": {
+        "hostingPlanName": "[concat('VGV-',parameters('environmentName'),'-APP-PLAN')]",
+        "serverFarmResourceGroup": "[concat('VGV-',parameters('environmentName'),'-RGP-APP')]",
+        "nameWEBApp": "[concat('VGV-',parameters('environmentName'),'-WAP-WEB')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-03-01",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "[resourceId('microsoft.insights/components/', variables('nameWEBApp'))]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('nameWEBApp')]",
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('nameWEBApp')), '2015-05-01').InstrumentationKey]"
+                        }
+                    ]
+                },
+                "name": "[variables('nameWEBApp')]",
+                "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "hostingEnvironment": ""
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "Microsoft.ApplicationInsights.AzureWebSites",
+                    "type": "siteextensions",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('nameWEBApp'))]"
+                    ],
+                    "properties": {
+                    }
+                }
+            ],
+            "tags": {
+                "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty"
+            },
+            "type": "Microsoft.Web/sites"
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSizeId": "[parameters('workerSize')]",
+                "reserved": false,
+                "numberOfWorkers": "1",
+                "hostingEnvironment": ""
+            },
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01",
+            "name": "[variables('nameWEBApp')]",
+            "type": "microsoft.insights/components",
+            "location": "[parameters('location')]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('nameWEBApp'))]": "Resource"
+            },
+            "properties": {
+                "ApplicationId": "[variables('nameWEBApp')]",
+                "Request_Source": "IbizaWebAppExtensionCreate"
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

@@ -1,0 +1,320 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "DEV",
+      "allowedValues": [
+        "DEV",
+        "TEST",
+        "STAGE",
+        "PROD"
+      ],
+      "metadata": {
+        "description": "Chose your Environment name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "metadata": {
+        "description": "Chose region where the resources will be created"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard",
+        "Premium",
+        "PremiumV2"
+      ],
+      "metadata": {
+        "description": "Choose the App Service plan pricing tier"
+      }
+    },
+    "skuCode": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P1v2",
+        "P2v2",
+        "P3v2"
+      ],
+      "metadata": {
+        "description": "Choose the App Service plan pricing tier"
+      }
+    },
+    "workerSize": {
+      "type": "string",
+      "defaultValue": "0",
+      "allowedValues": [
+        "0",
+        "3"
+      ],
+      "metadata": {
+        "description": "Worker default size is 0. For PremiumV2 is 3"
+      }
+    },
+    "sQLAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "testsqladmin",
+      "metadata": {
+        "description": "This is the SQL administrator login"
+      }
+    },
+    "sQLAdministratorLoginPassword": {
+      "type": "securestring",
+      "defaultValue": "P@ssw0rd1",
+      "metadata": {
+        "description": "This is the SQL administrator password"
+      }
+    },
+    "edition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Free",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Chose the database edition"
+      }
+    },
+    "collation": {
+      "type": "string",
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+      "metadata": {
+        "description": "Chose the SQL database collation"
+      }
+    },
+    "maxSizeBytes": {
+      "type": "string",
+      "defaultValue": "2147483648",
+      "metadata": {
+        "description": "This is the SQL database maximum size"
+      }
+    },
+    "requestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Free",
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    },
+    "serviceBusSku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    }
+  },
+  "variables": {
+    "hostingPlanName": "[concat('VGV-',parameters('environmentName'),'-APP-PLAN')]",
+    "serverFarmResourceGroup": "[concat('VGV-',parameters('environmentName'),'-RGP-APP')]",
+    "nameWEBApp": "[concat('VGV-',parameters('environmentName'),'-WAP-WEB')]",
+    "sqlServerName": "[concat('vgv-',toLower(parameters('environmentName')),'-sql-srv')]",
+    "databaseName": "[concat('vgv-',toLower(parameters('environmentName')),'-sql-db')]",
+    "serviceBusNamespaceName": "[concat('VGV-',parameters('environmentName'),'-SRV-BUS')]",
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "defaultAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('serviceBusNamespaceName'), variables('defaultSASKeyName'))]",
+    "sbVersion": "2017-04-01"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('location')]",
+      "name": "[variables('hostingPlanName')]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "workerSizeId": "[parameters('workerSize')]",
+        "reserved": false,
+        "numberOfWorkers": "1",
+        "hostingEnvironment": ""
+      },
+      "sku": {
+        "Tier": "[parameters('sku')]",
+        "Name": "[parameters('skuCode')]"
+      },
+      "tags": {
+        "displayName": "ApplicationServicePlan"
+      },
+      "type": "Microsoft.Web/serverfarms"
+    },
+    {
+      "apiVersion": "2015-05-01",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[variables('nameWEBApp')]",
+      "properties": {
+        "ApplicationId": "[variables('nameWEBApp')]",
+        "Request_Source": "IbizaWebAppExtensionCreate"
+      },
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('nameWEBApp'))]": "Resource",
+        "displayName": "AppInsightsComponent"
+      },
+      "type": "microsoft.insights/components"
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[variables('sqlServerName')]",
+      "properties": {
+        "administratorLogin": "[parameters('sQLAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sQLAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "[variables('databaseName')]",
+          "type": "databases",
+          "location": "[parameters('location')]",
+          "tags": {
+            "displayName": "Database"
+          },
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "edition": "[parameters('edition')]",
+            "collation": "[parameters('collation')]",
+            "maxSizeBytes": "[parameters('maxSizeBytes')]",
+            "requestedServiceObjectiveName": "[parameters('requestedServiceObjectiveName')]"
+          }
+        },
+        {
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "location": "[parameters('location')]",
+          "name": "AllowAllWindowsAzureIps",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          },
+          "type": "firewallrules"
+        }
+      ],
+      "tags": {
+        "displayName": "SQLServer"
+      },
+      "type": "Microsoft.Sql/servers"
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+        "[resourceId('microsoft.insights/components/', variables('nameWEBApp'))]"
+      ],
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "ApplicationService"
+      },
+      "name": "[variables('nameWEBApp')]",
+      "properties": {
+        "siteConfig": {
+          "connectionStrings": [
+            {
+              "name": "defaultConnection",
+              "ConnectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sQLAdministratorLogin'), '@', variables('sqlServerName'), ';Password=', parameters('sQLAdministratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          ],
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('nameWEBApp')), '2015-05-01').InstrumentationKey]"
+            }
+          ]
+        },
+        "name": "[variables('nameWEBApp')]",
+        "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+        "hostingEnvironment": ""
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', variables('nameWEBApp'))]"
+          ],
+          "name": "Microsoft.ApplicationInsights.AzureWebSites",
+          "properties": {
+          },
+          "type": "siteextensions"
+        }
+      ],
+      "tags": {
+        "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty"
+      },
+      "type": "Microsoft.Web/sites"
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[variables('serviceBusNamespaceName')]",
+      "properties": {
+      },
+      "sku": {
+        "name": "[parameters('serviceBusSku')]"
+      },
+      "tags": {
+        "displayName": "ServiceBus"
+      },
+      "type": "Microsoft.ServiceBus/Namespaces"
+    }
+  ],
+  "outputs": {
+    "DefaultSharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('defaultAuthRuleResourceId'), variables('sbVersion')).primaryKey]"
+    },
+    "NamespaceDefaultConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('defaultAuthRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+    }
+  }
+}

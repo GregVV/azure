@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "type": "string",
+            "defaultValue": "DEV",
+            "allowedValues": [
+                "DEV",
+                "TEST",
+                "STAGE",
+                "PROD"
+            ],
+            "metadata": {
+                "description": "This is your Environment name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "metadata": {
+                "description": "This is the region where the resources will be created"
+            }
+        },
+        "sQLAdministratorLogin": {
+            "type": "string",
+            "defaultValue": "agsqladmin",
+            "metadata": {
+                "description": "This is the SQL administrator login"
+            }
+        },
+        "sQLAdministratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "This is the SQL administrator password"
+            }
+        }
+    },
+    "variables": {
+        "sqlServerName": "[concat('vgv-',toLower(parameters('environmentName')),'-sql-srv')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "name": "[variables('sqlServerName')]",
+            "properties": {
+                "administratorLogin": "[parameters('sQLAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('sQLAdministratorLoginPassword')]",
+                "version": "12.0"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2014-04-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+                    ],
+                    "location": "[parameters('location')]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "endIpAddress": "0.0.0.0",
+                        "startIpAddress": "0.0.0.0"
+                    },
+                    "type": "firewallrules"
+                }
+            ],
+            "type": "Microsoft.Sql/servers"
+        }
+    ],
+    "outputs": {
+    }
+}

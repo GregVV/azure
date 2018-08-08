@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2047
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "InteliasTest", "InteliasTest\InteliasTest.deployproj", "{BC8951BD-186A-4931-ACB5-A6F4B2184DD9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BC8951BD-186A-4931-ACB5-A6F4B2184DD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC8951BD-186A-4931-ACB5-A6F4B2184DD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC8951BD-186A-4931-ACB5-A6F4B2184DD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC8951BD-186A-4931-ACB5-A6F4B2184DD9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {52CB126A-B177-4F66-A1F3-18A48CD6A62E}
+	EndGlobalSection
+EndGlobal
